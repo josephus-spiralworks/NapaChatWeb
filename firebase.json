@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": "build/js/packages/composeApp/kotlin",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
