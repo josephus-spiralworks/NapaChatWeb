@@ -28,9 +28,14 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
     sourceSets {
-        
+//        val commonMain by getting {
+//            dependencies {
+//                implementation("dev.gitlive:firebase-auth:1.8.0") // use latest
+//                implementation("dev.gitlive:firebase-app:1.8.0")
+//            }
+//        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)

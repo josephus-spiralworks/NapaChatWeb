@@ -25,6 +25,13 @@ dependencyResolutionManagement {
             }
         }
         mavenCentral()
+//        maven {
+//            url = uri("https://maven.pkg.github.com/GitLiveApp/firebase-kotlin-sdk")
+//            credentials {
+//                username = providers.gradleProperty("gpr.user").get()
+//                password = providers.gradleProperty("gpr.token").get()
+//            }
+//        }
     }
 }
 
