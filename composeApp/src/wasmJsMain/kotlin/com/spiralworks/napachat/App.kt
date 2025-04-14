@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,9 +47,11 @@ import com.spiralworks.napachat.data.countries
 import com.spiralworks.napachat.ui.CountryPickerDialog
 import isEmailValid
 import isPhoneValid
+import kotlinx.coroutines.launch
 import napachat.composeapp.generated.resources.Res
 import napachat.composeapp.generated.resources.icon_nc
 import org.jetbrains.compose.resources.painterResource
+import sendLoginLinkJs
 
 @Composable
 fun App() {
@@ -162,17 +165,40 @@ fun LoginCard() {
                 isEmailValid(email.text)
             }
 
+//            Button(
+//                onClick = {
+////                    sendLoginLinkJs(email.text)
+//                },
+//                enabled = isNextEnabled,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//                    .height(48.dp),
+//                shape = RoundedCornerShape(12.dp)
+//            ) {
+//                Text("Next")
+//            }
+
+            val coroutineScope = rememberCoroutineScope()
+            var showMessage by remember { mutableStateOf<String?>(null) }
+
             Button(
                 onClick = {
-//                    sendLoginLinkJs(email.text)
+                    coroutineScope.launch {
+                        val result = sendLoginLinkJs(email.text)
+                        showMessage = result.getOrNull() ?: result.exceptionOrNull()?.message
+                    }
                 },
-                enabled = isNextEnabled,
+                enabled = isEmailValid(email.text), // or however you're validating
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Next")
+            Text("Next")
+        }
+
+            showMessage?.let {
+                Text(it, color = Color.Green, modifier = Modifier.padding(top = 16.dp))
             }
         }
     }
