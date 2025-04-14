@@ -20,12 +20,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults.textFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,16 +47,53 @@ import androidx.compose.ui.unit.sp
 import com.spiralworks.napachat.data.Country
 import com.spiralworks.napachat.data.countries
 import com.spiralworks.napachat.ui.CountryPickerDialog
+import completeSignInJs
+import getCompleted
+import getEmail
+import getError
+import getLoggedIn
+import getSuccess
+import getUserEmail
 import isEmailValid
 import isPhoneValid
+import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
+import logoutJs
 import napachat.composeapp.generated.resources.Res
 import napachat.composeapp.generated.resources.icon_nc
+import onAuthChange
 import org.jetbrains.compose.resources.painterResource
 import sendLoginLinkJs
 
 @Composable
 fun App() {
+    val coroutineScope = rememberCoroutineScope()
+    var message by remember { mutableStateOf<String?>(null) }
+    var logoutMessage by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var loginStatus by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        onAuthChange { result ->
+            val loggedIn = getLoggedIn(result)
+            val email = getUserEmail(result)
+
+            loginStatus = if (loggedIn) "Welcome back $email" else null
+        }
+    }
+    LaunchedEffect(Unit) {
+        val result: JsAny = completeSignInJs().await()
+        val loggedIn = getCompleted(result)
+        val email = getEmail(result)
+        val error = getError(result)
+
+        loginStatus = if (loggedIn) "Logged in as $email"
+        else if (error != null) "Login failed: $error"
+        else null
+
+        loading = false
+    }
+
     MaterialTheme {
         Box(
             modifier = Modifier
@@ -68,7 +107,40 @@ fun App() {
                 ),
             contentAlignment = Alignment.Center
         ) {
-            LoginCard()
+            if (loading) {
+                LoadingDialog("Checking...")
+            } else {
+                if (loginStatus != null && loginStatus!!.startsWith("Logged in")) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(loginStatus!!)
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Button(onClick = {
+                            coroutineScope.launch {
+                                val result: JsAny = logoutJs().await()
+                                val success = getSuccess(result)
+                                val error = getError(result)
+
+                                logoutMessage = if (success) {
+                                    loginStatus = null // force logout
+                                    "Logged out"
+                                } else {
+                                    "Logout failed: $error"
+                                }
+                            }
+                        }) {
+                            Text("Logout")
+                        }
+
+                        logoutMessage?.let {
+                            Text(it, color = if (it.startsWith("Logout failed")) Color.Red else Color.Gray)
+                        }
+                    }
+                } else {
+                    LoginCard()
+                }
+            }
         }
     }
 }
@@ -165,27 +237,17 @@ fun LoginCard() {
                 isEmailValid(email.text)
             }
 
-//            Button(
-//                onClick = {
-////                    sendLoginLinkJs(email.text)
-//                },
-//                enabled = isNextEnabled,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(48.dp),
-//                shape = RoundedCornerShape(12.dp)
-//            ) {
-//                Text("Next")
-//            }
-
             val coroutineScope = rememberCoroutineScope()
+            var loading by remember { mutableStateOf(false) }
             var showMessage by remember { mutableStateOf<String?>(null) }
 
             Button(
                 onClick = {
                     coroutineScope.launch {
+                        loading = true
                         val result = sendLoginLinkJs(email.text)
                         showMessage = result.getOrNull() ?: result.exceptionOrNull()?.message
+                        loading = false
                     }
                 },
                 enabled = isEmailValid(email.text), // or however you're validating
@@ -194,8 +256,11 @@ fun LoginCard() {
                     .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-            Text("Next")
-        }
+                Text("Next")
+            }
+            if(loading) {
+                LoadingDialog("Sending login link")
+            }
 
             showMessage?.let {
                 Text(it, color = Color.Green, modifier = Modifier.padding(top = 16.dp))
@@ -250,6 +315,22 @@ fun CountrySelector(
                     showPicker = false
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun LoadingDialog(message: String = "Loading...") {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xAA000000)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+            Spacer(Modifier.height(16.dp))
+            Text(message, color = Color.White)
         }
     }
 }

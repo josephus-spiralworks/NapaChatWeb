@@ -5,12 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NapaChat</title>
     <link type="text/css" rel="stylesheet" href="styles.css">
-    <script type="application/javascript" src="composeApp.js"></script>
+    <script type="module" src="composeApp.mjs"></script>
 </head>
 <body>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-    import { getAuth, sendSignInLinkToEmail } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import {
+      getAuth,
+      sendSignInLinkToEmail,
+      isSignInWithEmailLink,
+      signInWithEmailLink
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDwOQJWuRVrPS17LFEwti5P3xlnXwbPE0I",
@@ -23,6 +30,16 @@
     const auth = getAuth(app);
 
     window.firebaseAuth = {
+
+      logout: async () => {
+        try {
+          await signOut(auth);
+          return { success: true };
+        } catch (error) {
+          return { success: false, error: error.message };
+        }
+      },
+
       sendLoginLink: async (email) => {
         const actionCodeSettings = {
           url: window.location.href,
@@ -35,8 +52,44 @@
         } catch (error) {
           return { success: false, error: error.message };
         }
-      }
-    };
+      },
+
+      completeSignIn: async () => {
+        try {
+          const url = window.location.href;
+          const email = window.localStorage.getItem('emailForSignIn');
+          if (!isSignInWithEmailLink(auth, url)) return { completed: false };
+
+          if (!email) {
+            return { completed: false, error: "Missing email in localStorage" };
+          }
+
+          const result = await signInWithEmailLink(auth, email, url);
+          return { completed: true, email: result.user.email };
+        } catch (error) {
+          return { completed: false, error: error.message };
+        }
+      },
+
+      getCurrentUser: () => {
+        const user = auth.currentUser;
+        if (user) {
+          return { loggedIn: true, email: user.email };
+        } else {
+          return { loggedIn: false };
+        }
+      },
+
+      onAuthChange: (callback) => {
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            callback({ loggedIn: true, email: user.email });
+          } else {
+            callback({ loggedIn: false });
+          }
+      });
+  }
+};
 </script>
 </body>
 </html>
