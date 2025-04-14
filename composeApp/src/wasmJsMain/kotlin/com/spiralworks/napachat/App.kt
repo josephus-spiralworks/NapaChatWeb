@@ -238,16 +238,13 @@ fun LoginCard() {
             }
 
             val coroutineScope = rememberCoroutineScope()
-            var loading by remember { mutableStateOf(false) }
             var showMessage by remember { mutableStateOf<String?>(null) }
 
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        loading = true
                         val result = sendLoginLinkJs(email.text)
                         showMessage = result.getOrNull() ?: result.exceptionOrNull()?.message
-                        loading = false
                     }
                 },
                 enabled = isEmailValid(email.text), // or however you're validating
@@ -257,9 +254,6 @@ fun LoginCard() {
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Next")
-            }
-            if(loading) {
-                LoadingDialog("Sending login link")
             }
 
             showMessage?.let {
