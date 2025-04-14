@@ -23,7 +23,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build KMP web app
-        run: ./gradlew wasmJsBrowserDistribution
+        run: ./gradlew wasmJsBrowserWebpack
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
