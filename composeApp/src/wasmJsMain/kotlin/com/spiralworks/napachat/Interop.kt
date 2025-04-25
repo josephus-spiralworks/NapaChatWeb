@@ -22,6 +22,9 @@ external fun getCompleted(result: JsAny): Boolean
 @JsFun("result => result.email")
 external fun getEmail(result: JsAny): String?
 
+@JsFun("result => result.name")
+external fun getName(result: JsAny): String?
+
 @JsFun("window.firebaseAuth.onAuthChange")
 external fun onAuthChange(callback: (JsAny) -> Unit)
 
@@ -30,6 +33,9 @@ external fun getLoggedIn(result: JsAny): Boolean
 
 @JsFun("result => result.email")
 external fun getUserEmail(result: JsAny): String?
+
+@JsFun("() => window.firebaseAuth.getCurrentUser()")
+external fun getCurrentUserJs(): JsAny?
 
 suspend fun sendLoginLinkJs(email: String): Result<String> {
     return try {
@@ -46,4 +52,9 @@ suspend fun sendLoginLinkJs(email: String): Result<String> {
     } catch (e: Throwable) {
         Result.failure(e)
     }
+}
+
+external interface LogoutResult : JsAny {
+    val success: Boolean
+    val error: String?
 }

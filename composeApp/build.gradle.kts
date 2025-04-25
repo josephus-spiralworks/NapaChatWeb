@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 kotlin {
@@ -30,12 +31,11 @@ kotlin {
     }
 
     sourceSets {
-//        val commonMain by getting {
-//            dependencies {
-//                implementation("dev.gitlive:firebase-auth:1.8.0") // use latest
-//                implementation("dev.gitlive:firebase-app:1.8.0")
-//            }
-//        }
+        val commonMain by getting {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+            }
+        }
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -45,6 +45,8 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
+
+            implementation("media.kamel:kamel-image:1.0.3")
         }
     }
 }
